@@ -76,6 +76,41 @@ class ComplexSensor:
 		except:
 			tw.log.trace('error').warning('Undefined error')
 
+class RoomPressureSensor:
+	def __init__(self, input_string):
+		self.get_string_split = input_string[:35].split() # split string but only first 35 characters
+		self.pressure = float (int(self.get_string_split[7])*256+int(self.get_string_split[6]))/10
+		self.temperature = float (int(self.get_string_split[5])*256+int(self.get_string_split[4]))/10
+		self.humidity =  (int(self.get_string_split[3])/2)
+		self.light = int(self.get_string_split[2])
+	def displayValues(self):
+	   print "Temperature: ", self.temperature,  "Humidity: ", self.humidity,", Light: ", self.light, "Pressure: ", self.pressure
+	def writeToLogAndCosm(self, id_stream1, id_stream2, id_stream3, id_stream4):
+		tw.log.info('logging value ext= ' + str(self.temperature))	
+		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature},{"id":id_stream2,"current_value":self.humidity}, {"id":id_stream3,"current_value":self.light}, {"id":id_stream4,"current_value":self.pressure}]}
+		try:
+			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=5.0)
+			if resp.status_code == 200:
+				tw.log.info('response value = 200 OK')
+			elif resp.status_code == 401:
+				tw.log.error('response value = 401 Not Authorized')
+			elif resp.status_code == 403:
+				tw.log.error('response value = 403 Forbidden')				
+			elif resp.status_code == 404:
+				tw.log.error('response value = 404 Not Found')				
+			elif resp.status_code == 422:
+				tw.log.error('response value = 422 Unprocessable Entity')			
+			elif resp.status_code == 500:
+				tw.log.error('response value = 500 Internal Server Error')		
+			elif resp.status_code == 503:
+				tw.log.error('response value = 503 No server error')					
+			else:
+				tw.log.error('response value unknown = ' + str(resp.status_code))
+		except requests.exceptions.Timeout:
+			tw.log.trace('error').warning('Timeout')		
+		except:
+			tw.log.trace('error').warning('Undefined error')			
+			
 class ElectroPower:
 	def __init__(self, input_string):
 		self.get_string_split = input_string[:30].split() # split string but only first 30 characters
@@ -138,9 +173,9 @@ while True:
 
 	#internal sensor roomNode id=5
 	if serial_string[:5] == "OK 5 ":										
-		int5_sens = ComplexSensor(serial_string)
+		int5_sens = RoomPressureSensor(serial_string)
 		int5_sens.displayValues()
-		int5_sens.writeToLogAndCosm("Tin5", "Xin5", "Lin5")			
+		int5_sens.writeToLogAndCosm("Tin5", "Xin5", "Lin5", "P5")			
 
 	#internal sensor roomNode id=9
 	if serial_string[:5] == "OK 9 ":										
@@ -153,3 +188,6 @@ while True:
 		elPow = ElectroPower(serial_string)
 		elPow.displayValues()
 		elPow.writeToLogAndCosm("Epower")	
+	
+	#Send time
+	#serial_port.write("hello")
