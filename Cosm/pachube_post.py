@@ -20,7 +20,7 @@ class SimpleSensor:
 		tw.log.info('logging value gasMeter= ' + str(self.gasMeter))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature}, {"id":id_stream2,"current_value":self.gasMeter}]}
 		try:
-			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=5.0)
+			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
 			if resp.status_code == 200:
 				tw.log.info('response value = 200 OK')
 			elif resp.status_code == 401:
@@ -46,6 +46,9 @@ class ComplexSensor:
 	def __init__(self, input_string):
 		self.get_string_split = input_string[:30].split() # split string but only first 30 characters
 		self.temperature = float (int(self.get_string_split[5])*256+int(self.get_string_split[4]))/10
+		#check negative number
+		if self.temperature > 51.2:
+			self.temperature = round(self.temperature - 102.4,1)
 		self.humidity =  (int(self.get_string_split[3])/2)
 		self.light = int(self.get_string_split[2])
 	def displayValues(self):
@@ -54,7 +57,7 @@ class ComplexSensor:
 		tw.log.info('logging value ext= ' + str(self.temperature))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature},{"id":id_stream2,"current_value":self.humidity}, {"id":id_stream3,"current_value":self.light}]}
 		try:
-			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=5.0)
+			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
 			if resp.status_code == 200:
 				tw.log.info('response value = 200 OK')
 			elif resp.status_code == 401:
@@ -89,7 +92,7 @@ class RoomPressureSensor:
 		tw.log.info('logging value ext= ' + str(self.temperature))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature},{"id":id_stream2,"current_value":self.humidity}, {"id":id_stream3,"current_value":self.light}, {"id":id_stream4,"current_value":self.pressure}]}
 		try:
-			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=5.0)
+			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
 			if resp.status_code == 200:
 				tw.log.info('response value = 200 OK')
 			elif resp.status_code == 401:
@@ -125,8 +128,10 @@ class ElectroPower:
 	def writeToLogAndCosm(self, id_stream1):
 		tw.log.info('logging value Epower= ' + str(self.power123))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.power123},]}
+		params = {'field3': self.power123,'key':'NJQGS40ZVNGNK36S'}
 		try:
-			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=5.0)
+			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)							
+			respThingSpeak=requests.post('http://api.thingspeak.com/update',headers=headerThingSpeak, data=params,timeout=50.0)
 			if resp.status_code == 200:
 				tw.log.info('response value = 200 OK')
 			elif resp.status_code == 401:
@@ -154,6 +159,8 @@ serial_port = serial.Serial(PORT, BAUD_RATE)	#open serial port
 
 # authentication headers
 headers = {"X-PachubeApiKey": "vi2cY7xBsOtFX-5dswzekyaFcYzbLUaaHWxQRXwrgN0"}
+#headerThingSpeak = {'key=NJQGS40ZVNGNK36S&field1=222'}
+headerThingSpeak = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"}
 
 # send meassured value to pachube in json format when new message from sensor arrives
 while True:
