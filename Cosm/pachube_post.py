@@ -7,6 +7,9 @@ import twiggy as tw
 
 tw.quickSetup(file='/home/pi/pachube/pachube.log')
 tw.log.info('starting pachube_post.py')
+firstStart=True
+print "time: ",time.asctime()
+
 
 class SimpleSensor:
 	def __init__(self, input_string):
@@ -17,6 +20,20 @@ class SimpleSensor:
 	def displayValues(self):
 	   print "Temperature: ", self.temperature,", GasMeter: ", self.gasMeter,  ", Counter: ", self.counter
 	def writeToLogAndCosm(self, id_stream1, id_stream2):
+		# calculate gas meter diference on time periods
+		if self.firstStart == True:
+			self.firstStart = False
+			self.t0 = time.localtime()
+			self.oldGasMeter = self.int_sens.gasMeter
+		else:
+			self.t = time.localtime()
+			print 'Minutes:', self.t.tm_min
+			if self.t.tm_min <> self.t0.tm_min:
+				self.diffGasMeter = self.int_sens.gasMeter - self.oldGasMeter
+				print " diffGasMeter: ", self.diffGasMeter
+				self.oldGasMeter = self.int_sens.gasMeter
+				self.t0 = self.t
+	
 		tw.log.info('logging value gasMeter= ' + str(self.gasMeter))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature}, {"id":id_stream2,"current_value":self.gasMeter}]}
 		try:
