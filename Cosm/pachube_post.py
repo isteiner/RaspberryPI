@@ -8,8 +8,10 @@ import twiggy as tw
 tw.quickSetup(file='/home/pi/pachube/pachube.log')
 tw.log.info('starting pachube_post.py')
 firstStart=True
+previousGasMeterHour = previousGasMeterDay = previousGasMeterMonth = 0
+diffGasMeterHour = diffGasMeterDay = diffGasMeterMonth = 0
+t0_hour = t0_day = t0_month = time.localtime()
 print "time: ",time.asctime()
-
 
 class SimpleSensor:
 	def __init__(self, input_string):
@@ -20,22 +22,41 @@ class SimpleSensor:
 	def displayValues(self):
 	   print "Temperature: ", self.temperature,", GasMeter: ", self.gasMeter,  ", Counter: ", self.counter
 	def writeToLogAndCosm(self, id_stream1, id_stream2):
-		# calculate gas meter diference on time periods
-		if self.firstStart == True:
-			self.firstStart = False
-			self.t0 = time.localtime()
-			self.oldGasMeter = self.int_sens.gasMeter
+		# calculate gas meter increment on time periods: hour, day, month
+		global firstStart
+		global t0_hour
+		global t0_day
+		global t0_month
+		global previousGasMeterHour
+		global previousGasMeterDay
+		global previousGasMeterMonth
+		global diffGasMeterHour
+		global diffGasMeterDay
+		global diffGasMeterMonth
+		if firstStart == True:
+			firstStart = False
+			t0_hour = t0_day = t0_month = time.localtime()
+			previousGasMeterHour = previousGasMeterDay = previousGasMeterMonth = self.gasMeter
 		else:
 			self.t = time.localtime()
-			print 'Minutes:', self.t.tm_min
-			if self.t.tm_min <> self.t0.tm_min:
-				self.diffGasMeter = self.int_sens.gasMeter - self.oldGasMeter
-				print " diffGasMeter: ", self.diffGasMeter
-				self.oldGasMeter = self.int_sens.gasMeter
-				self.t0 = self.t
-	
+			print 'Hour:', self.t.tm_hour, ' Day:', self.t.tm_mday, ' Month:', self.t.tm_mon
+			if self.t.tm_hour <> t0_hour.tm_hour:
+				diffGasMeterHour = round(self.gasMeter - previousGasMeterHour,2)
+				print " diffGasMeterHour: ", diffGasMeterHour
+				previousGasMeterHour = self.gasMeter
+				t0_hour = self.t
+			if self.t.tm_mday <> t0_day.tm_mday:
+				diffGasMeterDay = round(self.gasMeter - previousGasMeterDay, 2)
+				print " diffGasMeterDay: ", diffGasMeterDay
+				previousGasMeterDay = self.gasMeter
+				t0_day = self.t
+			if self.t.tm_mon <> t0_month.tm_mon:
+				diffGasMeterMonth = round(self.gasMeter - previousGasMeterMonth,2)
+				print " diffGasMeterMonth: ", diffGasMeterMonth
+				previousGasMeterMonth = self.gasMeter
+				t0_month = self.t				
 		tw.log.info('logging value gasMeter= ' + str(self.gasMeter))	
-		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature}, {"id":id_stream2,"current_value":self.gasMeter}]}
+		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature}, {"id":id_stream2,"current_value":self.gasMeter}, {"id":"GasHour","current_value":diffGasMeterHour}, {"id":"GasDay","current_value":diffGasMeterDay}, {"id":"GasMonth","current_value":diffGasMeterMonth}]}
 		try:
 			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
 			if resp.status_code == 200:
