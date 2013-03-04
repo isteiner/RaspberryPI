@@ -55,13 +55,13 @@ class SimpleSensor:
 				print " diffGasMeterMonth: ", diffGasMeterMonth
 				previousGasMeterMonth = self.gasMeter
 				t0_month = self.t				
-		tw.log.info('logging value gasMeter= ' + str(self.gasMeter))	
+		#tw.log.info('logging value gasMeter= ' + str(self.gasMeter))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature}, {"id":id_stream2,"current_value":self.gasMeter}, {"id":"GasHour","current_value":diffGasMeterHour}, {"id":"GasDay","current_value":diffGasMeterDay}, {"id":"GasMonth","current_value":diffGasMeterMonth}]}
 		try:
 			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
-			if resp.status_code == 200:
-				tw.log.info('response value = 200 OK')
-			elif resp.status_code == 401:
+			#if resp.status_code == 200:
+				#tw.log.info('response value = 200 OK')
+			if resp.status_code == 401:
 				tw.log.error('response value = 401 Not Authorized')
 			elif resp.status_code == 403:
 				tw.log.error('response value = 403 Forbidden')				
@@ -92,13 +92,13 @@ class ComplexSensor:
 	def displayValues(self):
 	   print "Temperature: ", self.temperature,  "Humidity: ", self.humidity,", Light: ", self.light
 	def writeToLogAndCosm(self, id_stream1, id_stream2, id_stream3):
-		tw.log.info('logging value ext= ' + str(self.temperature))	
+		#tw.log.info('logging value ext= ' + str(self.temperature))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature},{"id":id_stream2,"current_value":self.humidity}, {"id":id_stream3,"current_value":self.light}]}
 		try:
 			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
-			if resp.status_code == 200:
-				tw.log.info('response value = 200 OK')
-			elif resp.status_code == 401:
+			#if resp.status_code == 200:
+				#tw.log.info('response value = 200 OK')
+			if resp.status_code == 401:
 				tw.log.error('response value = 401 Not Authorized')
 			elif resp.status_code == 403:
 				tw.log.error('response value = 403 Forbidden')				
@@ -127,13 +127,13 @@ class RoomPressureSensor:
 	def displayValues(self):
 	   print "Temperature: ", self.temperature,  "Humidity: ", self.humidity,", Light: ", self.light, "Pressure: ", self.pressure
 	def writeToLogAndCosm(self, id_stream1, id_stream2, id_stream3, id_stream4):
-		tw.log.info('logging value ext= ' + str(self.temperature))	
+		#tw.log.info('logging value ext= ' + str(self.temperature))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature},{"id":id_stream2,"current_value":self.humidity}, {"id":id_stream3,"current_value":self.light}, {"id":id_stream4,"current_value":self.pressure}]}
 		try:
 			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
-			if resp.status_code == 200:
-				tw.log.info('response value = 200 OK')
-			elif resp.status_code == 401:
+			#if resp.status_code == 200:
+				#tw.log.info('response value = 200 OK')
+			if resp.status_code == 401:
 				tw.log.error('response value = 401 Not Authorized')
 			elif resp.status_code == 403:
 				tw.log.error('response value = 403 Forbidden')				
@@ -164,15 +164,15 @@ class ElectroPower:
 	   print "Power1: ", self.power1,  "Power2: ", self.power2,", Power3: ", self.power3
 	   print "Power123: ", self.power123   
 	def writeToLogAndCosm(self, id_stream1):
-		tw.log.info('logging value Epower= ' + str(self.power123))	
+		#tw.log.info('logging value Epower= ' + str(self.power123))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.power123},]}
 		params = {'field3': self.power123,'key':'NJQGS40ZVNGNK36S'}
 		try:
 			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)							
 			respThingSpeak=requests.post('http://api.thingspeak.com/update',headers=headerThingSpeak, data=params,timeout=50.0)
-			if resp.status_code == 200:
-				tw.log.info('response value = 200 OK')
-			elif resp.status_code == 401:
+			#if resp.status_code == 200:
+				#tw.log.info('response value = 200 OK')
+			if resp.status_code == 401:
 				tw.log.error('response value = 401 Not Authorized')
 			elif resp.status_code == 403:
 				tw.log.error('response value = 403 Forbidden')				
@@ -207,31 +207,31 @@ while True:
 	#thermocouple sensor and gas meter id=22
 	if serial_string[:5] == "OK 22": 										    
 		int_sens = SimpleSensor(serial_string)
-		int_sens.displayValues()
+		#int_sens.displayValues()
 		int_sens.writeToLogAndCosm("T22", "Gas")
 	
 	#external sensor roomNode id=1
 	if (serial_string[:5] == "OK 1 ") or (serial_string[:5] == "OK 33"):	
 		ext_sens = ComplexSensor(serial_string)
-		ext_sens.displayValues()
+		#ext_sens.displayValues()
 		ext_sens.writeToLogAndCosm("Tout", "Xout", "Lout")
 
 	#internal sensor roomNode id=5
 	if serial_string[:5] == "OK 5 ":										
 		int5_sens = RoomPressureSensor(serial_string)
-		int5_sens.displayValues()
+		#int5_sens.displayValues()
 		int5_sens.writeToLogAndCosm("Tin5", "Xin5", "Lin5", "P5")			
 
 	#internal sensor roomNode id=9
 	if serial_string[:5] == "OK 9 ":										
 		int9_sens = ComplexSensor(serial_string)
-		int9_sens.displayValues()
+		#int9_sens.displayValues()
 		int9_sens.writeToLogAndCosm("Tin9", "Xin9", "Lin9")	
 		
 	#Power of Electicity id=2
 	if serial_string[:5] == "OK 2 ":										
 		elPow = ElectroPower(serial_string)
-		elPow.displayValues()
+		#elPow.displayValues()
 		elPow.writeToLogAndCosm("Epower")	
 	
 	#Send time
