@@ -1,3 +1,7 @@
+# Gateway between Xively and JeeNodes sensors
+# Programmed by Igor Steiner
+# 2014-03-15	correct the log and diagnostic code
+
 import serial, os
 import sys
 import requests
@@ -39,46 +43,48 @@ class SimpleSensor:
 			previousGasMeterHour = previousGasMeterDay = previousGasMeterMonth = self.gasMeter
 		else:
 			self.t = time.localtime()
-			print 'Hour:', self.t.tm_hour, ' Day:', self.t.tm_mday, ' Month:', self.t.tm_mon
+			#print 'Hour:', self.t.tm_hour, ' Day:', self.t.tm_mday, ' Month:', self.t.tm_mon
 			if self.t.tm_hour <> t0_hour.tm_hour:
 				diffGasMeterHour = round(self.gasMeter - previousGasMeterHour,2)
-				print " diffGasMeterHour: ", diffGasMeterHour
+				#print " diffGasMeterHour: ", diffGasMeterHour
 				previousGasMeterHour = self.gasMeter
 				t0_hour = self.t
 			if self.t.tm_mday <> t0_day.tm_mday:
 				diffGasMeterDay = round(self.gasMeter - previousGasMeterDay, 2)
-				print " diffGasMeterDay: ", diffGasMeterDay
+				#print " diffGasMeterDay: ", diffGasMeterDay
 				previousGasMeterDay = self.gasMeter
 				t0_day = self.t
 			if self.t.tm_mon <> t0_month.tm_mon:
 				diffGasMeterMonth = round(self.gasMeter - previousGasMeterMonth,2)
-				print " diffGasMeterMonth: ", diffGasMeterMonth
+				#print " diffGasMeterMonth: ", diffGasMeterMonth
 				previousGasMeterMonth = self.gasMeter
 				t0_month = self.t				
 		#tw.log.info('logging value gasMeter= ' + str(self.gasMeter))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature}, {"id":id_stream2,"current_value":self.gasMeter}, {"id":"GasHour","current_value":diffGasMeterHour}, {"id":"GasDay","current_value":diffGasMeterDay}, {"id":"GasMonth","current_value":diffGasMeterMonth}]}
 		try:
-			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
-			#if resp.status_code == 200:
-				#tw.log.info('response value = 200 OK')
-			if resp.status_code == 401:
-				tw.log.error('response value = 401 Not Authorized')
+			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
+			if resp.status_code == 200:
+				#print " Response gasMeter - 200 -ok"
+				#tw.log.info('response value gasMeter = 200 OK')
+				pass  
+			elif resp.status_code == 401:
+				tw.log.error('response value gasMeter = 401 Not Authorized')
 			elif resp.status_code == 403:
-				tw.log.error('response value = 403 Forbidden')				
+				tw.log.error('response value gasMeter = 403 Forbidden')				
 			elif resp.status_code == 404:
-				tw.log.error('response value = 404 Not Found')				
+				tw.log.error('response value gasMeter = 404 Not Found')				
 			elif resp.status_code == 422:
-				tw.log.error('response value = 422 Unprocessable Entity')			
+				tw.log.error('response value gasMeter = 422 Unprocessable Entity')			
 			elif resp.status_code == 500:
-				tw.log.error('response value = 500 Internal Server Error')		
+				tw.log.error('response value gasMeter = 500 Internal Server Error')		
 			elif resp.status_code == 503:
-				tw.log.error('response value = 503 No server error')					
+				tw.log.error('response value gasMeter = 503 No server error')					
 			else:
-				tw.log.error('response value unknown = ' + str(resp.status_code))
+				tw.log.error('response value unknown gasMeter = ' + str(resp.status_code))
 		except requests.exceptions.Timeout:
-			tw.log.trace('error').warning('Timeout')		
+			tw.log.trace('error').warning('Timeout gasMeter')		
 		except:
-			tw.log.trace('error').warning('Undefined error')
+			tw.log.trace('error').warning('Undefined error gasMeter')
 
 class ComplexSensor:
 	def __init__(self, input_string):
@@ -96,26 +102,28 @@ class ComplexSensor:
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature},{"id":id_stream2,"current_value":self.humidity}, {"id":id_stream3,"current_value":self.light}]}
 		try:
 			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
-			#if resp.status_code == 200:
-				#tw.log.info('response value = 200 OK')
-			if resp.status_code == 401:
-				tw.log.error('response value = 401 Not Authorized')
+			if resp.status_code == 200:
+				#print " Response RoomNode - 200 -ok"
+				#tw.log.info('response value RoomNode = 200 OK')
+				pass  
+			elif resp.status_code == 401:
+				tw.log.error('response value RoomNode = 401 Not Authorized')
 			elif resp.status_code == 403:
-				tw.log.error('response value = 403 Forbidden')				
+				tw.log.error('response value RoomNode = 403 Forbidden')				
 			elif resp.status_code == 404:
-				tw.log.error('response value = 404 Not Found')				
+				tw.log.error('response value RoomNode = 404 Not Found')				
 			elif resp.status_code == 422:
-				tw.log.error('response value = 422 Unprocessable Entity')			
+				tw.log.error('response value RoomNode = 422 Unprocessable Entity')			
 			elif resp.status_code == 500:
-				tw.log.error('response value = 500 Internal Server Error')		
+				tw.log.error('response value RoomNode = 500 Internal Server Error')		
 			elif resp.status_code == 503:
-				tw.log.error('response value = 503 No server error')					
+				tw.log.error('response value RoomNode = 503 No server error')					
 			else:
-				tw.log.error('response value unknown = ' + str(resp.status_code))
+				tw.log.error('response value unknown RoomNode = ' + str(resp.status_code))
 		except requests.exceptions.Timeout:
-			tw.log.trace('error').warning('Timeout')		
+			tw.log.trace('error').warning('Timeout RoomNode')		
 		except:
-			tw.log.trace('error').warning('Undefined error')
+			tw.log.trace('error').warning('Undefined error RoomNode')
 
 class RoomPressureSensor:
 	def __init__(self, input_string):
@@ -131,26 +139,28 @@ class RoomPressureSensor:
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature},{"id":id_stream2,"current_value":self.humidity}, {"id":id_stream3,"current_value":self.light}, {"id":id_stream4,"current_value":self.pressure}]}
 		try:
 			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
-			#if resp.status_code == 200:
-				#tw.log.info('response value = 200 OK')
-			if resp.status_code == 401:
-				tw.log.error('response value = 401 Not Authorized')
+			if resp.status_code == 200:
+				#print " Response RoomPressure - 200 -ok"
+				#tw.log.info('response value RoomPressure = 200 OK')
+				pass  
+			elif resp.status_code == 401:
+				tw.log.error('response value RoomPressure = 401 Not Authorized')
 			elif resp.status_code == 403:
-				tw.log.error('response value = 403 Forbidden')				
+				tw.log.error('response value RoomPressure = 403 Forbidden')				
 			elif resp.status_code == 404:
-				tw.log.error('response value = 404 Not Found')				
+				tw.log.error('response value RoomPressure = 404 Not Found')				
 			elif resp.status_code == 422:
-				tw.log.error('response value = 422 Unprocessable Entity')			
+				tw.log.error('response value RoomPressure = 422 Unprocessable Entity')			
 			elif resp.status_code == 500:
-				tw.log.error('response value = 500 Internal Server Error')		
+				tw.log.error('response value RoomPressure = 500 Internal Server Error')		
 			elif resp.status_code == 503:
-				tw.log.error('response value = 503 No server error')					
+				tw.log.error('response value RoomPressure = 503 No server error')					
 			else:
-				tw.log.error('response value unknown = ' + str(resp.status_code))
+				tw.log.error('response value unknown RoomPressure = ' + str(resp.status_code))
 		except requests.exceptions.Timeout:
-			tw.log.trace('error').warning('Timeout')		
+			tw.log.trace('error').warning('Timeout RoomPressure')		
 		except:
-			tw.log.trace('error').warning('Undefined error')			
+			tw.log.trace('error').warning('Undefined error RoomPressure')			
 			
 class ElectroPower:
 	def __init__(self, input_string):
@@ -170,26 +180,28 @@ class ElectroPower:
 		try:
 			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)							
 			respThingSpeak=requests.post('http://api.thingspeak.com/update',headers=headerThingSpeak, data=params,timeout=50.0)
-			#if resp.status_code == 200:
-				#tw.log.info('response value = 200 OK')
-			if resp.status_code == 401:
-				tw.log.error('response value = 401 Not Authorized')
+			if resp.status_code == 200:
+				#print " Response Epower - 200 -ok"
+				#tw.log.info('response value Epower = 200 OK')
+				pass  
+			elif resp.status_code == 401:
+				tw.log.error('response value Epower = 401 Not Authorized')
 			elif resp.status_code == 403:
-				tw.log.error('response value = 403 Forbidden')				
+				tw.log.error('response value Epower = 403 Forbidden')				
 			elif resp.status_code == 404:
-				tw.log.error('response value = 404 Not Found')				
+				tw.log.error('response value Epower = 404 Not Found')				
 			elif resp.status_code == 422:
-				tw.log.error('response value = 422 Unprocessable Entity')			
+				tw.log.error('response value Epower = 422 Unprocessable Entity')			
 			elif resp.status_code == 500:
-				tw.log.error('response value = 500 Internal Server Error')		
+				tw.log.error('response value Epower = 500 Internal Server Error')		
 			elif resp.status_code == 503:
-				tw.log.error('response value = 503 No server error')					
+				tw.log.error('response value Epower = 503 No server error')					
 			else:
-				tw.log.error('response value unknown = ' + str(resp.status_code))
+				tw.log.error('response value unknown Epower = ' + str(resp.status_code))
 		except requests.exceptions.Timeout:
-			tw.log.trace('error').warning('Timeout')		
+			tw.log.trace('error').warning('Timeout Epower')		
 		except:
-			tw.log.trace('error').warning('Undefined error')			
+			tw.log.trace('error').warning('Undefined error Epower')			
 			
 PORT = '/dev/ttyUSB0'	# set tty port
 BAUD_RATE = 57600
@@ -200,7 +212,7 @@ headers = {"X-PachubeApiKey": "vi2cY7xBsOtFX-5dswzekyaFcYzbLUaaHWxQRXwrgN0"}
 #headerThingSpeak = {'key=NJQGS40ZVNGNK36S&field1=222'}
 headerThingSpeak = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"}
 
-# send meassured value to pachube in json format when new message from sensor arrives
+# send measured value to pachube in json format when new message from sensor arrives
 while True:
 	serial_string = serial_port.readline()	#read line from tty
 
