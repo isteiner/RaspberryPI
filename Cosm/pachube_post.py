@@ -1,6 +1,7 @@
 # Gateway between Xively and JeeNodes sensors
 # Programmed by Igor Steiner
 # 2014-03-15	correct the log and diagnostic code
+# 2014-03-22	bug fixes
 
 import serial, os
 import sys
@@ -62,7 +63,7 @@ class SimpleSensor:
 		#tw.log.info('logging value gasMeter= ' + str(self.gasMeter))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature}, {"id":id_stream2,"current_value":self.gasMeter}, {"id":"GasHour","current_value":diffGasMeterHour}, {"id":"GasDay","current_value":diffGasMeterDay}, {"id":"GasMonth","current_value":diffGasMeterMonth}]}
 		try:
-			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
+			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0)
 			if resp.status_code == 200:
 				#print " Response gasMeter - 200 -ok"
 				#tw.log.info('response value gasMeter = 200 OK')
@@ -101,7 +102,7 @@ class ComplexSensor:
 		#tw.log.info('logging value ext= ' + str(self.temperature))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature},{"id":id_stream2,"current_value":self.humidity}, {"id":id_stream3,"current_value":self.light}]}
 		try:
-			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
+			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0)
 			if resp.status_code == 200:
 				#print " Response RoomNode - 200 -ok"
 				#tw.log.info('response value RoomNode = 200 OK')
@@ -138,7 +139,7 @@ class RoomPressureSensor:
 		#tw.log.info('logging value ext= ' + str(self.temperature))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature},{"id":id_stream2,"current_value":self.humidity}, {"id":id_stream3,"current_value":self.light}, {"id":id_stream4,"current_value":self.pressure}]}
 		try:
-			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)
+			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0)
 			if resp.status_code == 200:
 				#print " Response RoomPressure - 200 -ok"
 				#tw.log.info('response value RoomPressure = 200 OK')
@@ -178,8 +179,8 @@ class ElectroPower:
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.power123},]}
 		params = {'field3': self.power123,'key':'NJQGS40ZVNGNK36S'}
 		try:
-			resp=requests.put('http://api.pachube.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=50.0)							
-			respThingSpeak=requests.post('http://api.thingspeak.com/update',headers=headerThingSpeak, data=params,timeout=50.0)
+			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0)							
+			#respThingSpeak=requests.post('http://api.thingspeak.com/update',headers=headerThingSpeak, data=params,timeout=50.0)
 			if resp.status_code == 200:
 				#print " Response Epower - 200 -ok"
 				#tw.log.info('response value Epower = 200 OK')
