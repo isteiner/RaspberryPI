@@ -2,6 +2,7 @@
 # Programmed by Igor Steiner
 # 2014-03-15	correct the log and diagnostic code
 # 2014-03-22	bug fixes
+# 2014-12-26	read cumulative gas values (day, month) from JeeNode instead calculate on RPi, add battery value B22
 
 import serial, os
 import sys
@@ -20,10 +21,13 @@ print "time: ",time.asctime()
 
 class SimpleSensor:
 	def __init__(self, input_string):
-		self.get_string_split = input_string[:27].split() # split string but only first 27 characters
+		self.get_string_split = input_string[:52].split() # split string but only first 52 characters
 		self.temperature = float (int(self.get_string_split[3])*256+int(self.get_string_split[2]))/10
 		self.gasMeter = float (int(self.get_string_split[7])*16777216+int(self.get_string_split[6])*65536+int(self.get_string_split[5])*256+int(self.get_string_split[4]))/10
 		self.counter = int(self.get_string_split[8])
+		self.battery = float (int(self.get_string_split[9]))/10
+		self.gasPrevDay = float (int(self.get_string_split[11])*256+int(self.get_string_split[10]))/10
+		self.gasPrevMonth = float (int(self.get_string_split[13])*256+int(self.get_string_split[12]))/10
 	def displayValues(self):
 	   print "Temperature: ", self.temperature,", GasMeter: ", self.gasMeter,  ", Counter: ", self.counter
 	def writeToLogAndCosm(self, id_stream1, id_stream2):
@@ -51,17 +55,17 @@ class SimpleSensor:
 				previousGasMeterHour = self.gasMeter
 				t0_hour = self.t
 			if self.t.tm_mday <> t0_day.tm_mday:
-				diffGasMeterDay = round(self.gasMeter - previousGasMeterDay, 2)
+				diffGasMeterDay = round(self.gasMeter - previousGasMeterDay, 2) # not used anymore this calculation value, read directly from JeeNode
 				#print " diffGasMeterDay: ", diffGasMeterDay
 				previousGasMeterDay = self.gasMeter
 				t0_day = self.t
 			if self.t.tm_mon <> t0_month.tm_mon:
-				diffGasMeterMonth = round(self.gasMeter - previousGasMeterMonth,2)
+				diffGasMeterMonth = round(self.gasMeter - previousGasMeterMonth,2) # not used anymore this calculation value, read directly from JeeNode
 				#print " diffGasMeterMonth: ", diffGasMeterMonth
 				previousGasMeterMonth = self.gasMeter
 				t0_month = self.t				
 		#tw.log.info('logging value gasMeter= ' + str(self.gasMeter))	
-		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature}, {"id":id_stream2,"current_value":self.gasMeter}, {"id":"GasHour","current_value":diffGasMeterHour}, {"id":"GasDay","current_value":diffGasMeterDay}, {"id":"GasMonth","current_value":diffGasMeterMonth}]}
+		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature}, {"id":id_stream2,"current_value":self.gasMeter}, {"id":"GasHour","current_value":diffGasMeterHour}, {"id":"GasDay","current_value":self.gasPrevDay}, {"id":"GasMonth","current_value":self.gasPrevMonth}, {"id":"B22","current_value":self.battery}]}
 		try:
 			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0)
 			if resp.status_code == 200:
