@@ -179,7 +179,7 @@ class ElectroPower:
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.power123},]}
 		params = {'field3': self.power123,'key':'NJQGS40ZVNGNK36S'}
 		try:
-			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0)							
+			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0)
 			#respThingSpeak=requests.post('http://api.thingspeak.com/update',headers=headerThingSpeak, data=params,timeout=50.0)
 			if resp.status_code == 200:
 				#print " Response Epower - 200 -ok"
