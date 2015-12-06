@@ -3,6 +3,7 @@
 # 2014-03-15	correct the log and diagnostic code
 # 2014-03-22	bug fixes
 # 2014-12-26	read cumulative gas values (day, month) from JeeNode instead calculate on RPi, add battery value B22
+# 2015-12-06    change the payload of external RoomNode and other optimizations
 
 import serial, os
 import sys
@@ -22,12 +23,12 @@ print "time: ",time.asctime()
 class SimpleSensor:
 	def __init__(self, input_string):
 		self.get_string_split = input_string[:52].split() # split string but only first 52 characters
-		self.temperature = float (int(self.get_string_split[3])*256+int(self.get_string_split[2]))/10
-		self.gasMeter = float (int(self.get_string_split[7])*16777216+int(self.get_string_split[6])*65536+int(self.get_string_split[5])*256+int(self.get_string_split[4]))/10
+		self.temperature = float (int(self.get_string_split[3])*0x100+int(self.get_string_split[2]))/10
+		self.gasMeter = float (int(self.get_string_split[7])*0x1000000+int(self.get_string_split[6])*0x10000+int(self.get_string_split[5])*0x100+int(self.get_string_split[4]))/10
 		self.counter = int(self.get_string_split[8])
 		self.battery = float (int(self.get_string_split[9]))/10
-		self.gasPrevDay = float (int(self.get_string_split[11])*256+int(self.get_string_split[10]))/10
-		self.gasPrevMonth = float (int(self.get_string_split[13])*256+int(self.get_string_split[12]))/10
+		self.gasPrevDay = float (int(self.get_string_split[11])*0x100+int(self.get_string_split[10]))/10
+		self.gasPrevMonth = float (int(self.get_string_split[13])*0x100+int(self.get_string_split[12]))/10
 	def displayValues(self):
 	   print "Temperature: ", self.temperature,", GasMeter: ", self.gasMeter,  ", Counter: ", self.counter
 	def writeToLogAndCosm(self, id_stream1, id_stream2):
@@ -94,11 +95,13 @@ class SimpleSensor:
 class ComplexSensor:
 	def __init__(self, input_string):
 		self.get_string_split = input_string[:30].split() # split string but only first 30 characters
-		self.temperature = float (int(self.get_string_split[5])*256+int(self.get_string_split[4]))/10
-		#check negative number
-		if self.temperature > 51.2:
-			self.temperature = round(self.temperature - 102.4,1)
-		self.humidity =  (int(self.get_string_split[3])/2)
+		self.temperature = int(self.get_string_split[5])*0x100+int(self.get_string_split[4])
+		#check and calulate for negative numbers
+		if self.temperature > 0x7ff:
+			self.temperature = self.temperature - 0xffff -1
+		self.temperature = float (self.temperature)/10
+		#print "Temperature: ", self.temperature
+		self.humidity =  int(self.get_string_split[3])
 		self.light = int(self.get_string_split[2])
 	def displayValues(self):
 	   print "Temperature: ", self.temperature,  "Humidity: ", self.humidity,", Light: ", self.light
@@ -133,8 +136,8 @@ class ComplexSensor:
 class RoomPressureSensor:
 	def __init__(self, input_string):
 		self.get_string_split = input_string[:35].split() # split string but only first 35 characters
-		self.pressure = float (int(self.get_string_split[7])*256+int(self.get_string_split[6]))/10
-		self.temperature = float (int(self.get_string_split[5])*256+int(self.get_string_split[4]))/10
+		self.pressure = float (int(self.get_string_split[7])*0x100+int(self.get_string_split[6]))/10
+		self.temperature = float (int(self.get_string_split[5])*0x100+int(self.get_string_split[4]))/10
 		self.humidity =  (int(self.get_string_split[3])/2)
 		self.light = int(self.get_string_split[2])
 	def displayValues(self):
@@ -170,9 +173,9 @@ class RoomPressureSensor:
 class ElectroPower:
 	def __init__(self, input_string):
 		self.get_string_split = input_string[:30].split() # split string but only first 30 characters
-		self.power1 = int(self.get_string_split[3])*256+int(self.get_string_split[2])
-		self.power2 = int(self.get_string_split[5])*256+int(self.get_string_split[4])
-		self.power3 = int(self.get_string_split[7])*256+int(self.get_string_split[6])
+		self.power1 = int(self.get_string_split[3])*0x100+int(self.get_string_split[2])
+		self.power2 = int(self.get_string_split[5])*0x100+int(self.get_string_split[4])
+		self.power3 = int(self.get_string_split[7])*0x100+int(self.get_string_split[6])
 		self.power123 = self.power1 + self.power2 + self.power3
 		#usekwh += float((self.power1 + self.power2 + self.power3) * 0.2) / 3600000;
 	def displayValues(self):
@@ -228,7 +231,7 @@ while True:
 		int_sens.writeToLogAndCosm("T22", "Gas")
 	
 	#external sensor roomNode id=1
-	if (serial_string[:5] == "OK 1 ") or (serial_string[:5] == "OK 33"):	
+	if serial_string[:5] == "OK 1 ":	
 		ext_sens = ComplexSensor(serial_string)
 		#ext_sens.displayValues()
 		ext_sens.writeToLogAndCosm("Tout", "Xout", "Lout")
