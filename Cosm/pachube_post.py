@@ -4,6 +4,7 @@
 # 2014-03-22	bug fixes
 # 2014-12-26	read cumulative gas values (day, month) from JeeNode instead calculate on RPi, add battery value B22
 # 2015-12-06    change the payload of external RoomNode and other optimizations
+# 2017-03-17	add in requests.put(...  verify=False) otherwise is ssl error
 
 import serial, os
 import sys
@@ -68,7 +69,7 @@ class SimpleSensor:
 		#tw.log.info('logging value gasMeter= ' + str(self.gasMeter))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature}, {"id":id_stream2,"current_value":self.gasMeter}, {"id":"GasHour","current_value":diffGasMeterHour}, {"id":"GasDay","current_value":self.gasPrevDay}, {"id":"GasMonth","current_value":self.gasPrevMonth}, {"id":"B22","current_value":self.battery}]}
 		try:
-			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0)
+			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0, verify=False)
 			if resp.status_code == 200:
 				#print " Response gasMeter - 200 -ok"
 				#tw.log.info('response value gasMeter = 200 OK')
@@ -109,7 +110,7 @@ class ComplexSensor:
 		#tw.log.info('logging value ext= ' + str(self.temperature))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature},{"id":id_stream2,"current_value":self.humidity}, {"id":id_stream3,"current_value":self.light}]}
 		try:
-			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0)
+			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0, verify=False)
 			if resp.status_code == 200:
 				#print " Response RoomNode - 200 -ok"
 				#tw.log.info('response value RoomNode = 200 OK')
@@ -146,7 +147,7 @@ class RoomPressureSensor:
 		#tw.log.info('logging value ext= ' + str(self.temperature))	
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.temperature},{"id":id_stream2,"current_value":self.humidity}, {"id":id_stream3,"current_value":self.light}, {"id":id_stream4,"current_value":self.pressure}]}
 		try:
-			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0)
+			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0, verify=False)
 			if resp.status_code == 200:
 				#print " Response RoomPressure - 200 -ok"
 				#tw.log.info('response value RoomPressure = 200 OK')
@@ -186,7 +187,7 @@ class ElectroPower:
 		data={"version":"1.0.0","datastreams":[{"id":id_stream1,"current_value":self.power123},]}
 		params = {'field3': self.power123,'key':'NJQGS40ZVNGNK36S'}
 		try:
-			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0)
+			resp=requests.put('https://api.xively.com/v2/feeds/40500',headers=headers,data=json.dumps(data),timeout=500.0, verify=False)
 			#respThingSpeak=requests.post('http://api.thingspeak.com/update',headers=headerThingSpeak, data=params,timeout=50.0)
 			if resp.status_code == 200:
 				#print " Response Epower - 200 -ok"
